@@ -28,7 +28,7 @@
   <li><a href="https://en.wikipedia.org/wiki/Ken_Thompson">Ken Thompson</a></li>
 </ul>
 
-<h2>Autors</h2>
+<h2>Authors</h2>
 <ul>
   <li>Gonzalo Andres Taragoza Montenegro</li>
   <li>Jorge Armando Morales Valencia</li>
