@@ -32,45 +32,75 @@ return (s1[count] - s2[count]);
 }
 
 /**
-* _strncmp- Checks if @s1 matches @s2 up to @length amount
-* @s1: String to be checked against @s2
-* @s2: String used to check @s1
-* @length:      How many characters to check
-* Return: 0 (if @s1 match against @s2) or any other number if not match against
+* *_strdup- Returns a pointer to a newly allocated space in memory
+* which contains a copy of the string given as a parameter
+* @str: String
+* Return: Pointer to the duplicated string or NULL (if str NULL)
 */
 
-int _strncmp(char *s1, char *s2, int length)
+char *_strdup(char *str)
 {
-while (length-- && *s1++ && *s2++ && (*s1 == *s2))
+char *c;
+int i, n;
+
+if (str == NULL)
+return (NULL);
+for (i = 0; str[i] != '\0'; i++)
 ;
-return (length == 0 ? 0 : *s1 - *s2);
+i++;
+c = malloc(i *sizeof(*c));
+if (c == NULL)
+return (NULL);
+for (n = 0; n < i; n++)
+c[n] = str[n];
+return (c);
 }
 
 /**
-* _strcpy- copies the string pointed to by src including terminating null byte
-* to the buffer pointed to by dest
-* @dest: pointer to destination of string
-* @src: pointer to source string to copy from
-* Return: Pointer to dest
+* _itoa- Convert an integer to char
+* @num: Number to be converted
+* Return: String of numbers
 */
 
-char *_strcpy(char *dest, char *src)
+char *_itoa(int num)
 {
-int point;
+char *str;
+int i = 0, num_copy = num;
 
-for (point = 0; src[point] != '\0'; point++)
-dest[point] = src[point];
-dest[point] = '\0';
-return (dest);
+while (num_copy > 0)
+{
+num_copy /= 10;
+i++;
+}
+str = malloc(sizeof(char) * (i + 1));
+if (str == NULL)
+return (NULL);
+
+str[i] = '\0';
+while (i--)
+{
+str[i] = (num % 10) + '0';
+num /= 10;
+}
+return (str);
 }
 
 /**
-* signal_handler- Catches and handles signals
-* @sig_num: Signal trigger (is 2 with Ctr+C)
+* free_array- Free tokens in array and the array itself
+* @array: Array of pointers to tokens
 */
 
-void signal_handler(int sig_num)
+void free_array(char **array)
 {
-if (sig_num)
-write(1, "^C\n", 3);
+int i = 0;
+
+if (array == NULL)
+return;
+
+while (array[i])
+{
+free(array[i]);
+i++;
+}
+free(array);
 }

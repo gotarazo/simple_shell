@@ -1,85 +1,54 @@
 #include "s_sh.h"
 
 /**
-* main- Entry point for the Simple Shell
-* @argc: Argument counter
-* @argv: Pointer to array of strings
-* Return: 0
+* main- Execute programs in the system
+* @argc: Number of arguments from command line, passed to shell at launch
+* @argv: Array of arguments passed to shell at launch
+* @env: Array of enviromental variables
+* Return: Exit code of 0 upon success, or number given to "exit"
 */
 
-int main(int argc, char *argv[])
+int main(int argc, char **argv, char **env)
 {
-signal(SIGINT, signal_handler);
-s_sh_loop(argc, argv);
-return (0);
-}
+char **free_path_token = tokenizer(var_finder("PATH", env), ":=");
+char **path_token = free_path_token + 1, *line = NULL, **array = NULL;
+ssize_t go = 0;
+size_t count = 0;
+int exit_code = 0, i = 0;
+(void)argc;
 
-/**
-* s_sh_loop- Loop of the Simple Shell
-* @argc: Number of args
-* @argv: Pointer to string array
-*/
-
-void s_sh_loop(int argc, char *argv[])
+while (42)
 {
-char *line = NULL, **tokens;
-int status = 1;
-(void) argc;
-(void) argv;
-do {
-line = s_sh_getline();
-tokens = s_sh_tokenize(line);
-status = s_sh_execute(tokens, line);
+count = 0;
+line = NULL;
+array = NULL;
+i++;
+write(STDIN_FILENO, "\033[1;35m$\033[0m ", 13);
+go = getline(&line, &count, stdin);
+if (run_shell(go))
+{
 free(line);
-free(tokens);
-} while (status);
+break;
 }
+if (line != NULL)
+{
+if (line[0] == '\n')
+{
+free(line);
+line = NULL;
+}
+}
+if (line != NULL)
+{
+array = tokenizer(line, "\n ");
+free(line);
+}
+if (life(array, argv, env, path_token, i, &exit_code))
+break;
 
-/**
-* s_sh_execute- Search builtins for function to execute & send to s_sh_launch
-* @args: Pointer to list of arguments
-* @line: String holding path
-* Return: 1 (if success)
-*/
-
-int s_sh_execute(char **args, char *line)
-{
-int i = 0, size = 0;
-char temp[150], *path = NULL, **dirs;
-
-builtin_t builtins[] = {
-{"help", s_sh_help}, {"exit", s_sh_exit},
-{"env", s_sh_env}, {"cd", s_sh_cd},
-{"setenv", s_sh_setenv}, {"unsetenv", s_sh_unsetenv},
-{"", s_sh_error}
-};
-dirs = malloc(sizeof(char *) * BUFFER_SIZE);
-if (!dirs)
-{
-write(1, "Malloc error in execute\n", 24);
-exit(101);
+free_array(array);
 }
-size = (sizeof(builtins) / (sizeof(char *) * 2));
-if (args[0] == '\0')
-{
-free(dirs);
-return (1);
-}
-for (i = 0; i < size; i++)
-{
-if (_strcmp(args[0], builtins[i].name) == 0)
-{
-/* Running found matching builtin */
-free(path);
-free(dirs);
-return (builtins[i].function(args));
-}
-}
-/* No matching builtins, search for program in path */
-check_environ(path, temp, dirs);
-free(path);
-/* No builtins found, search path and run matching executable */
-s_sh_launch(args, dirs, line);
-free(dirs);
-return (1);
+free_array(free_path_token);
+free_array(array);
+return (exit_code);
 }

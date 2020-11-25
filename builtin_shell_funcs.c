@@ -1,117 +1,116 @@
 #include "s_sh.h"
 
 /**
-* s_sh_error- Triggered if user enters no input
-* @args: Pointer to array of tokens
-* Return: 1
+* custom_atoi- Convert a character-represented number into an integer
+* @status: Flag representing whether character is a number or not
+* @s: String
+* Return: Converted integer
 */
 
-int s_sh_error(char **args)
+int custom_atoi(int *status, char *s)
 {
-(void) args;
-return (1);
-}
+int i = 0, sum = 0, mul = 1;
 
-/**
-* s_sh_env- Prints the current environment
-* @args: Pointer to array of tokens
-* Return: 1 (if success)
-*/
-
-int s_sh_env(char **args)
-{
-int i = 0;
-int len = 0;
-(void) args;
-
-while (environ[i])
-{
-len = _strlen(environ[i]);
-write(1, environ[i], len);
-write(1, "\n", 1);
+while (s[i])
 i++;
-}
-return (1);
-}
 
-/**
-* s_sh_help- Displays help
-* @args: Pointer to array of tokens
-* Return: 1 (if runs)
-*/
-
-int s_sh_help(char **args)
+while (i--)
 {
-char *line = "|-------------------------------------------------------|\n";
-char *name = "| Name\t\t| Description\t\t\t\t|\n";
-char *help = "| help\t\t| This document\t\t\t\t|\n";
-char *env = "| env\t\t| Prints out the system environment\t|\n";
-char *setenv = "| setenv\t| Usage setenv variable value overwrite |\n";
-char *unsetenv = "| unsetenv\t| Usage unsetenv variable \t\t|\n";
-char *cd = "| cd \t\t| Changes the current working directory\t|\n";
-char *exit = "| exit\t\t| Exit Simple Shell\t\t|\n";
-(void) args;
+if (s[i] > 57 || s[i] < 48)
+*status = 1;
 
-write(1, line, _strlen(line));
-write(1, name, _strlen(name));
-write(1, line, _strlen(line));
-write(1, help, _strlen(help));
-write(1, env, _strlen(env));
-write(1, setenv, _strlen(setenv));
-write(1, unsetenv, _strlen(unsetenv));
-write(1, cd, _strlen(cd));
-write(1, exit, _strlen(exit));
-write(1, line, _strlen(line));
-return (1);
+sum += (s[i] - 48) * mul;
+mul *= 10;
+}
+return (sum);
 }
 
 /**
-* s_sh_exit- Function to exit sfsh
-* @args: Pointer to array of tokens
+* print_env- Pint the environment list
+* @env: Array of pointers to environmental variables
 * Return: 0
 */
 
-int s_sh_exit(char **args)
+int print_env(char **env)
 {
-int i = 0, number = 0;
-char *msg = "Leaving Simple Shell\n";
-(void) args;
+int i = 0;
 
-while (args[++i])
-;
-if (i > 1)
+while (env[i])
 {
-for (i = 0; args[1][i] != '\0'; i++)
-{
-number *= 10;
-number += args[1][i] - '0';
+write(STDOUT_FILENO, env[i], _strlen(env[i]));
+write(STDOUT_FILENO, "\n", 1);
+i++;
 }
-write(1, msg, _strlen(msg));
-free(args);
-exit(number);
-}
-write(1, msg, _strlen(msg));
 return (0);
 }
 
 /**
-* cmdcat- Concatenates @dir and @file into executable format
-* @dir: Directory where @file resides
-* @file: Program to be executed
-* Return: Concatenated string of @dir + / + @file
+* run_shell- Check if  getline fails
+* @go: Return value of getline function
+* Return: 0 (if success) or 1 (if failure)
 */
 
-char *cmdcat(char *dir, char *file)
+int run_shell(int go)
 {
-int dir_length = 0, file_length = 0;
+if (go == -1)
+{
+write(STDIN_FILENO, "\n", 1);
+return (1);
+}
+return (0);
+}
 
-while (dir[++dir_length])
-;
-dir[dir_length++] = '/';
+/**
+* var_finder- Find the PATH variable in environment list
+* @var: String literal of desired environmental variable
+* @env: Environment list
+* Return: String of desired environment variable and its value
+*/
 
-while (file[file_length])
-dir[dir_length++] = file[file_length++];
+char *var_finder(char *var, char **env)
+{
+int i = 0, ii = 0;
 
-dir[dir_length] = '\0';
-return (dir);
+if (!(var) || !(env))
+return (NULL);
+
+while (env[ii] != NULL)
+{
+i = 0;
+while (var[i] != '\0' && var[i] == env[ii][i])
+i++;
+
+if (var[i] == '\0')
+return (env[ii]);
+
+ii++;
+}
+return (NULL);
+}
+
+/**
+* forking_helper- Fork to create child process and execute command
+* @av: Commandline argument
+* Return: 0 (if success) or 1 (if fail)
+*/
+
+int forking_helper(char **av)
+{
+pid_t forking_val;
+
+forking_val = fork();
+if (forking_val == -1)
+return (1);
+
+if (forking_val == 0)
+{
+if (execve(av[0], av, NULL) == -1)
+exit(1);
+}
+else
+{
+wait(NULL);
+return (0);
+}
+return (0);
 }
