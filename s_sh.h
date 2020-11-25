@@ -1,8 +1,6 @@
 #ifndef S_SH_H
 #define S_SH_H
 
-#define BUFFER_SIZE 64
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,45 +12,42 @@
 #include <dirent.h>
 #include <fcntl.h>
 
-extern char **environ;
+#define win(x) write(STDOUT_FILENO, x, _strlen(x))
+#define din() write(STDOUT_FILENO, "###\n", 4)
 
-/**
-* struct builtin- Data type for our list of builtins
-* @name: Name of command
-* @function: Function pointer of associated name
-*/
+#define ERR_EXIT(a, b, c)\
+do {\
+write(STDERR_FILENO, a, _strlen(a));\
+write(STDERR_FILENO, ": ", 2);\
+write(STDERR_FILENO, b, _strlen(b));\
+write(STDERR_FILENO, ": exit: Illegal number: ", 24);\
+write(STDERR_FILENO, c, _strlen(c));\
+write(STDERR_FILENO, "\n", 1);\
+} while (0)
 
-typedef struct builtin
-{
-char *name;
-int (*function)(char **);
-} builtin_t;
+#define ERR_EXE(a, b, c)\
+do {\
+write(STDERR_FILENO, a, _strlen(a));\
+write(STDERR_FILENO, ": ", 2);\
+write(STDERR_FILENO, b, _strlen(b));\
+write(STDERR_FILENO, ": ", 2);\
+write(STDERR_FILENO, c, _strlen(c));\
+write(STDERR_FILENO, ": not found", 11);\
+write(STDERR_FILENO, "\n", 1);\
+} while (0)
 
-
-/* Main Functions */
-void s_sh_loop(int argc, char *argv[]);
-char *s_sh_getline(void);
-char **s_sh_tokenize(char *line);
-int s_sh_execute(char **args, char *line);
-int s_sh_launch(char **args, char **dirs, char *line);
-void s_sh_search_path(char **args, char **dirs);
-void check_environ(char *path, char temp[], char **dirs);
-
-/* Builtin Functions */
-int s_sh_help(char **args);
-int s_sh_exit(char **args);
-int s_sh_error(char **args);
-int s_sh_env(char **args);
-int s_sh_setenv(char **args);
-int s_sh_unsetenv(char **args);
-int s_sh_cd(char **args);
-
-/* Basic Functions */
+int _strlen(char *s);
 int _strcmp(char *s1, char *s2);
-int _strncmp(char *s1, char *s2, int length);
-char *_strcpy(char *dest, char *src);
-int _strlen(char *str);
-void signal_handler(int sig_num);
-char *cmdcat(char *dir, char *file);
+char **tokenizer(char *str, const char *delim);
+char *smart_cat(char **path, char *name);
+int forking_helper(char **av);
+int print_env(char **env);
+int custom_atoi(int *status, char *s);
+char *_strdup(char *str);
+char *_itoa(int num);
+char *var_finder(char *var, char **env);
+void free_array(char **array);
+int life(char **array, char **argv, char **env, char **p_t, int i, int *e_c);
+int run_shell(int go);
 
 #endif
