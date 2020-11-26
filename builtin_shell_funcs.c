@@ -1,44 +1,63 @@
 #include "s_sh.h"
 
 /**
- * _execve - execute.
- * @ag: commands.
- * @hist: historial of commands.
- * @str: line.
- * Return: Status
+ * error_no_such - error when no such file or directory
+ * @str: string.
+ * @hist: historial of commands
  */
 
-void _execve(char **ag, int hist, char *str)
+void error_no_such(char *str, int hist)
 {
-  pid_t child_pid;
-  int status, i = 0;
+  char *ps = ": ";
+  char *nf = "not found\n";
 
-  child_pid = fork();
+  _puts(sh_call);
+  _puts(ps);
+  int_to_str(hist);
+  _puts(ps);
+  _puts(str);
+  _puts(ps);
+  _puts(nf);
+  state = 127;
+}
 
-  if (child_pid == 0)
-    if (execve(ag[0], ag, environ) == -1)
-      {
-	chk_error(ag[0], hist);
-	free(str);
-	while (ag[i])
-	  {
-	    free(ag[i]);
-	    i++;
-	  }
-	free(ag);
-	exit(state);
-      }
-  if (child_pid > 0)
-    {
-      wait(&status);
-      if (WIFEXITED(status))
-	state = WEXITSTATUS(status);
-    }
-  else
-    {
-      perror("Error child");
-      state = EXIT_FAILURE;
-    }
+/**
+ * error_permission - error when permissions denied.
+ * @str: string.
+ * @hist: historial of commands
+ */
+
+void error_permission(char *str, int hist)
+{
+  char *ps = ": ";
+  char *pd = "Permission denied\n";
+
+  _puts(sh_call);
+  _puts(ps);
+  int_to_str(hist);
+  _puts(ps);
+  _puts(str);
+  _puts(ps);
+  _puts(pd);
+  state = 126;
+}
+
+/**
+ * chk_error - check error.
+ * @str: string.
+ * @hist: historial of commands
+ */
+void chk_error(char *str, int hist)
+{
+  int i;
+
+  i = _strlen(str);
+  str[i] = '\0';
+
+  if (errno == ENOENT)
+    error_no_such(str, hist);
+  else if (errno == EACCES)
+    error_permission(str, hist);
 }
 
 /**
@@ -60,48 +79,30 @@ char *_getenv(char *name)
   for (i = 0; environ[i]; i++)
     if ((my_strcmp(environ[i], name, len) == 0))
       if (_strlen(environ[i]) > 5)
-	return (environ[i]);
+        return (environ[i]);
   return (NULL);
 }
 
 /**
- * _puts - show a string
- * @str: string
+ * _printenv - print env
+ * @str: string from getline.
+ * Return: 1 on success, 0 if fail.
  */
 
-void _puts(char *str)
+int _printenv(char *str)
 {
-  int i;
+  int i, j;
 
-  i = 0;
+  if (!str)
+    return (0);
 
-  while (str[i] != '\0')
+  for (i = 0; environ[i]; i++)
     {
-      _puterror(str[i]);
-      i++;
+      for (j = 0; environ[i][j]; j++)
+        {
+          _putchar(environ[i][j]);
+        }
+      _putchar(10);
     }
-}
-
-/**
- * _puterror - writes the character c to stderr
- * @c: The character to print
- *
- * Return: On success 1.
- * On error, -1 is returned, and errno is set appropriately.
- */
-int _puterror(char c)
-{
-  return (write(2, &c, 1));
-}
-
-/**
- * _putchar - writes the character c to stdout
- * @c: The character to print
- *
- * Return: On success 1.
- * On error, -1 is returned, and errno is set appropriately.
- */
-int _putchar(char c)
-{
-  return (write(1, &c, 1));
+  return (1);
 }

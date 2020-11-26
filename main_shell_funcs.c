@@ -1,85 +1,147 @@
 #include "s_sh.h"
 
 /**
- * error_no_such - error when no such file or directory
- * @str: string.
- * @hist: historial of commands
+ * _execve - execute.
+ * @ag: commands.
+ * @hist: historial of commands.
+ * @str: line.
+ * Return: Status
  */
 
-void error_no_such(char *str, int hist)
+void _execve(char **ag, int hist, char *str)
 {
-  char *ps = ": ";
-  char *nf = "not found\n";
+  pid_t child_pid;
+  int status, i = 0;
 
-  _puts(sh_call);
-  _puts(ps);
-  int_to_str(hist);
-  _puts(ps);
-  _puts(str);
-  _puts(ps);
-  _puts(nf);
-  state = 127;
+  child_pid = fork();
+
+  if (child_pid == 0)
+    if (execve(ag[0], ag, environ) == -1)
+      {
+        chk_error(ag[0], hist);
+        free(str);
+        while (ag[i])
+          {
+            free(ag[i]);
+            i++;
+          }
+        free(ag);
+        exit(state);
+      }
+  if (child_pid > 0)
+    {
+      wait(&status);
+      if (WIFEXITED(status))
+        state = WEXITSTATUS(status);
+    }
+  else
+    {
+      perror("Error child");
+      state = EXIT_FAILURE;
+    }
 }
 
 /**
- * error_permission - error when permissions denied.
- * @str: string.
- * @hist: historial of commands
+ * chk_builtin - Verify built in functions
+ * @word: string to compare
+ * Return: 1 on success, 0 if fail
  */
 
-void error_permission(char *str, int hist)
+int chk_builtin(char *word)
 {
-  char *ps = ": ";
-  char *pd = "Permission denied\n";
+  int i = 0;
 
-  _puts(sh_call);
-  _puts(ps);
-  int_to_str(hist);
-  _puts(ps);
-  _puts(str);
-  _puts(ps);
-  _puts(pd);
-  state = 126;
+  builtin func_built[] = {
+    {"exit", our_exit},
+    {"env", _printenv},
+    {NULL, NULL}
+  };
+  if (chk_void(word) == 0)
+    return (1);
+  while (func_built[i].str != NULL)
+    {
+      if (my_strcmp(word, func_built[i].str, _strlen(word) - 1) == 0)
+	{
+	  func_built[i].fun(word);
+	  return (1);
+	}
+      i++;
+    }
+  return (0);
 }
 
 /**
- * chk_error - check error.
- * @str: string.
- * @hist: historial of commands
+ * chk_path - check if the first argument is a file inside de PATH directories
+ * @str: string from getline
+ * Return: A Buffer or Array (Double pointer).
  */
-void chk_error(char *str, int hist)
+
+char **chk_path(char *str)
 {
   int i;
+  char *envpath = "PATH=", *concat, *pget;
+  char **pbuf, **array;
+  struct stat st;
 
-  i = _strlen(str);
-  str[i] = '\0';
+  array = write_buf(str, " \n");
 
-  if (errno == ENOENT)
-    error_no_such(str, hist);
-  else if (errno == EACCES)
-    error_permission(str, hist);
+  if (array[0][0] == '.' && array[0][1] == '/')
+    return (array);
+
+  pget = (cleanpath(_getenv(envpath)));
+
+  if (pget)
+    {
+      pbuf = write_buf(pget, ":\n");
+      for (i = 0; pbuf[i]; i++)
+	{
+	  concat = str_concat(pbuf[i], array[0]);
+
+	  if (stat(concat, &st) == 0)
+	    {
+	      for (i = 0; pbuf[i]; i++)
+		free(pbuf[i]);
+	      free(pbuf);
+	      free(pget);
+	      free(array[0]);
+	      array[0] = concat;
+	      return (array);
+	    }
+	  free(concat);
+	}
+      for (i = 0; pbuf[i]; i++)
+	free(pbuf[i]);
+      free(pbuf);
+    }
+  free(pget);
+  return (array);
 }
 
 /**
- * count_delim - count delimiters in str
- * @str: string
- * @delim: delimiters
- * Return: Number of delimiters
+ * cleanpath - make a copy from de PATH and verify if start with ':'
+ * @pathenv: enviroment variable PATH.
+ * Return: a string with the final copy of PATH.
  */
 
-int count_delim(char *str, char *delim)
+char *cleanpath(char *pathenv)
 {
-  int i, k, con = 1;
+  int i, j = 0;
+  char *clnpath;
 
-  for (i = 0; str[i]; i++)
+  if (pathenv == NULL)
+    return (NULL);
+  /* 5 - 1 (PATH= - .) = 4*/
+  clnpath = malloc(sizeof(char) * _strlen(pathenv) - 4);
+
+  if (pathenv[5] == ':')
+    clnpath[j++] = '.';
+
+  for (i = 5; pathenv[i]; j++, i++)
     {
-      for (k = 0; delim[k]; k++)
-	{
-	  if (delim[k] == str[i])
-	    con++;
-	}
+      clnpath[j] = pathenv[i];
     }
-  return (con);
+  clnpath[j] = '\0';
+  return (clnpath);
 }
 
 /**
