@@ -1,53 +1,55 @@
-#ifndef S_SH_H
-#define S_SH_H
+#ifndef HOLBERTON_H
+#define HOLBERTON_H
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
+#include <sys/wait.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/wait.h>
-#include <dirent.h>
-#include <fcntl.h>
+#include <string.h>
+#include <errno.h>
 
-#define win(x) write(STDOUT_FILENO, x, _strlen(x))
-#define din() write(STDOUT_FILENO, "###\n", 4)
+/**
+ * struct builtin - lista enlazada individualmente
+ * @str: string (cadena malloc'ed)
+ * @fun: apunta al siguiente nodo
+ * Description: List that contain the a string and a function.
+ */
 
-#define ERR_EXIT(a, b, c)\
-do {\
-write(STDERR_FILENO, a, _strlen(a));\
-write(STDERR_FILENO, ": ", 2);\
-write(STDERR_FILENO, b, _strlen(b));\
-write(STDERR_FILENO, ": exit: Illegal number: ", 24);\
-write(STDERR_FILENO, c, _strlen(c));\
-write(STDERR_FILENO, "\n", 1);\
-} while (0)
+typedef struct builtin
+{
+  char *str;
+  int (*fun)(char *);
+} builtin;
 
-#define ERR_EXE(a, b, c)\
-do {\
-write(STDERR_FILENO, a, _strlen(a));\
-write(STDERR_FILENO, ": ", 2);\
-write(STDERR_FILENO, b, _strlen(b));\
-write(STDERR_FILENO, ": ", 2);\
-write(STDERR_FILENO, c, _strlen(c));\
-write(STDERR_FILENO, ": not found", 11);\
-write(STDERR_FILENO, "\n", 1);\
-} while (0)
+extern char **environ;
+char *sh_call;
+int state;
 
-int _strlen(char *s);
-int _strcmp(char *s1, char *s2);
-char **tokenizer(char *str, const char *delim);
-char *smart_cat(char **path, char *name);
-int forking_helper(char **av);
-int print_env(char **env);
-int custom_atoi(int *status, char *s);
+/* FUNCTIONS */
+
+void _execve(char **ag, int, char *);
+char **write_buf(char *, char *);
+char **chk_path(char *);
+int my_strcmp(char *env, const char *str, int len);
+char *_getenv(char *);
 char *_strdup(char *str);
-char *_itoa(int num);
-char *var_finder(char *var, char **env);
-void free_array(char **array);
-int life(char **array, char **argv, char **env, char **p_t, int i, int *e_c);
-int run_shell(int go);
+char *str_concat(char *s1, char *s2);
+int chk_builtin(char *);
+int _strlen(char *s);
+int count_delim(char *str, char *delim);
+int our_exit(char *);
+int _printenv(char *);
+int _putchar(char c);
+void _puts(char *);
+char *cleanpath(char *);
+int chk_void(char *);
+/* Error */
+void chk_error(char *, int);
+void error_permission(char *, int);
+void error_no_such(char*, int);
+void int_to_str(int);
+int _puterror(char);
 
 #endif
