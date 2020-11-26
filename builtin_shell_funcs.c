@@ -1,116 +1,107 @@
 #include "s_sh.h"
 
 /**
-* custom_atoi- Convert a character-represented number into an integer
-* @status: Flag representing whether character is a number or not
-* @s: String
-* Return: Converted integer
-*/
+ * _execve - execute.
+ * @ag: commands.
+ * @hist: historial of commands.
+ * @str: line.
+ * Return: Status
+ */
 
-int custom_atoi(int *status, char *s)
+void _execve(char **ag, int hist, char *str)
 {
-int i = 0, sum = 0, mul = 1;
+  pid_t child_pid;
+  int status, i = 0;
 
-while (s[i])
-i++;
+  child_pid = fork();
 
-while (i--)
-{
-if (s[i] > 57 || s[i] < 48)
-*status = 1;
-
-sum += (s[i] - 48) * mul;
-mul *= 10;
-}
-return (sum);
-}
-
-/**
-* print_env- Pint the environment list
-* @env: Array of pointers to environmental variables
-* Return: 0
-*/
-
-int print_env(char **env)
-{
-int i = 0;
-
-while (env[i])
-{
-write(STDOUT_FILENO, env[i], _strlen(env[i]));
-write(STDOUT_FILENO, "\n", 1);
-i++;
-}
-return (0);
+  if (child_pid == 0)
+    if (execve(ag[0], ag, environ) == -1)
+      {
+	chk_error(ag[0], hist);
+	free(str);
+	while (ag[i])
+	  {
+	    free(ag[i]);
+	    i++;
+	  }
+	free(ag);
+	exit(state);
+      }
+  if (child_pid > 0)
+    {
+      wait(&status);
+      if (WIFEXITED(status))
+	state = WEXITSTATUS(status);
+    }
+  else
+    {
+      perror("Error child");
+      state = EXIT_FAILURE;
+    }
 }
 
 /**
-* run_shell- Check if  getline fails
-* @go: Return value of getline function
-* Return: 0 (if success) or 1 (if failure)
-*/
+ * _getenv - get a enviroment variable if match.
+ * @name: name of the enviroment variable.
+ * Return: enviroment variable, or Null if fail.
+ */
 
-int run_shell(int go)
+char *_getenv(char *name)
 {
-if (go == -1)
-{
-write(STDIN_FILENO, "\n", 1);
-return (1);
-}
-return (0);
-}
+  int i, len = 0;
 
-/**
-* var_finder- Find the PATH variable in environment list
-* @var: String literal of desired environmental variable
-* @env: Environment list
-* Return: String of desired environment variable and its value
-*/
+  while (name[len])
+    len++;
 
-char *var_finder(char *var, char **env)
-{
-int i = 0, ii = 0;
+  if (environ == NULL)
+    return (NULL);
 
-if (!(var) || !(env))
-return (NULL);
-
-while (env[ii] != NULL)
-{
-i = 0;
-while (var[i] != '\0' && var[i] == env[ii][i])
-i++;
-
-if (var[i] == '\0')
-return (env[ii]);
-
-ii++;
-}
-return (NULL);
+  for (i = 0; environ[i]; i++)
+    if ((my_strcmp(environ[i], name, len) == 0))
+      if (_strlen(environ[i]) > 5)
+	return (environ[i]);
+  return (NULL);
 }
 
 /**
-* forking_helper- Fork to create child process and execute command
-* @av: Commandline argument
-* Return: 0 (if success) or 1 (if fail)
-*/
+ * _puts - show a string
+ * @str: string
+ */
 
-int forking_helper(char **av)
+void _puts(char *str)
 {
-pid_t forking_val;
+  int i;
 
-forking_val = fork();
-if (forking_val == -1)
-return (1);
+  i = 0;
 
-if (forking_val == 0)
-{
-if (execve(av[0], av, NULL) == -1)
-exit(1);
+  while (str[i] != '\0')
+    {
+      _puterror(str[i]);
+      i++;
+    }
 }
-else
+
+/**
+ * _puterror - writes the character c to stderr
+ * @c: The character to print
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _puterror(char c)
 {
-wait(NULL);
-return (0);
+  return (write(2, &c, 1));
 }
-return (0);
+
+/**
+ * _putchar - writes the character c to stdout
+ * @c: The character to print
+ *
+ * Return: On success 1.
+ * On error, -1 is returned, and errno is set appropriately.
+ */
+int _putchar(char c)
+{
+  return (write(1, &c, 1));
 }
