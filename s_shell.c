@@ -76,7 +76,7 @@ dig--;
 }
 for (; pot > 0; pot /= 10)
 {
-_puterror((cpi / (pot)) + 48);
+_puterror((cpi / (pot)) +48);
 cpi %= pot;
 }
 }
