@@ -11,16 +11,16 @@
 #include <errno.h>
 
 /**
- * struct builtin - lista enlazada individualmente
- * @str: string (cadena malloc'ed)
- * @fun: apunta al siguiente nodo
- * Description: List that contain the a string and a function.
- */
+* struct builtin - lista enlazada individualmente
+* @str: string (cadena malloc'ed)
+* @fun: apunta al siguiente nodo
+* Description: List that contain the a string and a function.
+*/
 
 typedef struct builtin
 {
-  char *str;
-  int (*fun)(char *);
+char *str;
+int (*fun)(char *);
 } builtin;
 
 extern char **environ;
